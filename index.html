@@ -174,6 +174,22 @@
     .svc-tag.missing { background: transparent; border-style: dashed; border-color: var(--gold); color: var(--gold); }
     .drop-hint { outline: 3px dashed var(--rose); outline-offset: -12px; }
 
+    /* Servicios vinculados: tarjeta resaltada en blanco */
+    #linkedSection {
+      --card: #ffffff; --chip: #f6eef0; --line: #ead9dd;
+      --ink: #2a1a1e; --mut: #7a5f66; --rose: #c9577a; --rose-dark: #a8405f; --gold: #a8742c;
+      background: #ffffff; color: var(--ink);
+      border: 2px solid var(--rose);
+      box-shadow: 0 0 0 4px rgba(224,120,154,0.18), 0 18px 40px -12px rgba(0,0,0,0.55);
+    }
+    #linkedSection select option, #linkedSection select optgroup { background: #fff; color: #2a1a1e; }
+    #linkedSection .link-row.on { background-color: #fbe6ec; border-color: var(--rose); }
+    #linkedSection .svc-tag.main { color: #fff; }
+    #linkedSection .text-emerald-400 { color: #047857; }
+    #linkedSection .border-emerald-800\/60 { border-color: #6ee7b7; }
+    #linkedSection .text-red-300 { color: #b91c1c; }
+    #linkedSection .border-red-800\/60 { border-color: #fca5a5; }
+
     /* Modal Backdrop */
     .modal-backdrop {
       background-color: rgba(15, 10, 12, 0.75);
@@ -327,6 +343,21 @@
       <!-- Rendered by JS -->
     </section>
 
+    <!-- LINKED SERVICES (cross-sell) -->
+    <section class="salon-card p-5 mb-8" id="linkedSection">
+      <div class="flex flex-col md:flex-row md:items-end justify-between gap-3 mb-4">
+        <div>
+          <h3 class="font-semibold text-base sm:text-lg text-[var(--ink)]">🔗 Servicios vinculados</h3>
+          <p class="text-xs text-[var(--mut)]">Elige un producto o servicio principal y mira qué más tienen esos mismos clientes. Respeta el tipo de cabello y el período seleccionados.</p>
+        </div>
+        <div class="flex items-center gap-2">
+          <label class="text-xs font-semibold uppercase tracking-wider text-[var(--gold)]">Principal</label>
+          <select id="linkedMain" onchange="setLinkedMain(this.value)" class="bg-[var(--chip)] border border-[var(--line)] rounded-full text-xs sm:text-sm px-3 py-2 text-[var(--ink)] focus:outline-none focus:border-[var(--rose)] min-w-[220px]"></select>
+        </div>
+      </div>
+      <div id="linkedBody"></div>
+    </section>
+
     <!-- CHARTS GRID -->
     <section class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
       <!-- Services Bar Chart (2 Cols) -->
@@ -376,21 +407,6 @@
           <!-- Rendered by JS -->
         </div>
       </div>
-    </section>
-
-    <!-- LINKED SERVICES (cross-sell) -->
-    <section class="salon-card p-5 mb-8" id="linkedSection">
-      <div class="flex flex-col md:flex-row md:items-end justify-between gap-3 mb-4">
-        <div>
-          <h3 class="font-semibold text-base sm:text-lg text-[var(--ink)]">🔗 Servicios vinculados</h3>
-          <p class="text-xs text-[var(--mut)]">Elige un producto o servicio principal y mira qué más tienen esos mismos clientes. Respeta el tipo de cabello y el período seleccionados.</p>
-        </div>
-        <div class="flex items-center gap-2">
-          <label class="text-xs font-semibold uppercase tracking-wider text-[var(--gold)]">Principal</label>
-          <select id="linkedMain" onchange="setLinkedMain(this.value)" class="bg-[var(--chip)] border border-[var(--line)] rounded-full text-xs sm:text-sm px-3 py-2 text-[var(--ink)] focus:outline-none focus:border-[var(--rose)] min-w-[220px]"></select>
-        </div>
-      </div>
-      <div id="linkedBody"></div>
     </section>
 
     <!-- TIME EVOLUTION -->
@@ -1711,7 +1727,7 @@
                   <tr>
                     <th class="px-3 py-2">Cliente</th>
                     <th class="px-3 py-2">Contacto</th>
-                    <th class="px-3 py-2">Servicios que tiene</th>
+                    <th class="px-3 py-2 min-w-[240px]">Servicios que tiene</th>
                     <th class="px-3 py-2 text-center">Visitas</th>
                     <th class="px-3 py-2">Última</th>
                   </tr>
