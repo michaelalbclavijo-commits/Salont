@@ -1,0 +1,1675 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Dashboard del Salón · Servicios por tipo de cabello</title>
+  <!-- Fonts & Tailwind CSS -->
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;1,600&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    :root {
+      --bg: #1a1214;
+      --card: #25191c;
+      --card-hover: #2e1f23;
+      --ink: #f8ece9;
+      --mut: #b89da3;
+      --rose: #e0789a;
+      --rose-dark: #c9577a;
+      --gold: #d8a964;
+      --line: #3d2b2e;
+      --chip: #332327;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--ink);
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    }
+
+    .font-playfair {
+      font-family: 'Playfair Display', Georgia, serif;
+    }
+
+    /* Custom Scrollbars */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: var(--bg);
+    }
+    ::-webkit-scrollbar-thumb {
+      background: var(--line);
+      border-radius: 999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--rose);
+    }
+
+    /* Custom Glass & Shadows */
+    .salon-card {
+      background-color: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 1.25rem;
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .salon-card:hover {
+      border-color: rgba(224, 120, 154, 0.4);
+    }
+
+    .type-card {
+      background-color: var(--card);
+      border: 2px solid var(--line);
+      border-radius: 1.25rem;
+      overflow: hidden;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .type-card:hover {
+      transform: translateY(-4px);
+      border-color: var(--rose);
+      box-shadow: 0 12px 28px -6px rgba(224, 120, 154, 0.25);
+    }
+
+    .type-card.active {
+      border-color: var(--rose);
+      box-shadow: 0 0 0 2px rgba(224, 120, 154, 0.5), 0 12px 30px -4px rgba(201, 87, 122, 0.4);
+      background: linear-gradient(180deg, var(--card) 0%, #2f1d22 100%);
+    }
+
+    .tab-btn {
+      border: 1px solid var(--line);
+      background-color: var(--card);
+      color: var(--ink);
+      padding: 0.6rem 1.2rem;
+      border-radius: 999px;
+      font-weight: 500;
+      font-size: 0.875rem;
+      transition: all 0.2s;
+    }
+
+    .tab-btn:hover {
+      border-color: var(--rose);
+      color: #fff;
+    }
+
+    .tab-btn.active {
+      background-color: var(--rose);
+      color: #ffffff;
+      border-color: var(--rose);
+      box-shadow: 0 4px 16px rgba(201, 87, 122, 0.4);
+    }
+
+    .bar-row {
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .bar-row:hover .bar-title {
+      color: var(--rose);
+    }
+
+    .bar-row.selected .bar-title {
+      color: var(--rose);
+      font-weight: 700;
+    }
+
+    .track-bg {
+      background-color: var(--chip);
+      border-radius: 999px;
+      height: 1.125rem;
+      overflow: hidden;
+    }
+
+    .fill-bar {
+      height: 100%;
+      border-radius: 999px;
+      background: linear-gradient(90deg, var(--rose), var(--gold));
+      width: 0%;
+      transition: width 0.7s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    /* Date controls */
+    input[type="date"] { color-scheme: dark; }
+    .preset-btn {
+      border: 1px solid var(--line);
+      background-color: var(--chip);
+      color: var(--mut);
+      padding: 0.35rem 0.8rem;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      font-weight: 500;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+    .preset-btn:hover { color: var(--ink); border-color: var(--gold); }
+    .preset-btn.active { background-color: var(--gold); color: #1a1214; border-color: var(--gold); font-weight: 600; }
+    .svc-chip {
+      display: inline-flex; align-items: center; gap: 0.4rem;
+      border: 1px solid var(--line);
+      background-color: var(--chip);
+      color: var(--mut);
+      padding: 0.3rem 0.7rem;
+      border-radius: 999px;
+      font-size: 0.72rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .svc-chip .dot { width: 8px; height: 8px; border-radius: 50%; opacity: 0.35; }
+    .svc-chip.on { color: var(--ink); border-color: var(--rose); background-color: #3a262b; }
+    .svc-chip.on .dot { opacity: 1; }
+    .trend-point { transition: r 0.15s; }
+    .trend-point:hover { r: 6; }
+
+    /* Modal Backdrop */
+    .modal-backdrop {
+      background-color: rgba(15, 10, 12, 0.75);
+      backdrop-filter: blur(8px);
+    }
+
+    /* Pulse Indicator */
+    .live-dot {
+      width: 8px;
+      height: 8px;
+      background-color: #10b981;
+      border-radius: 50%;
+      box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+      animation: pulse 1.8s infinite;
+    }
+
+    @keyframes pulse {
+      0% {
+        transform: scale(0.95);
+        box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+      }
+      70% {
+        transform: scale(1);
+        box-shadow: 0 0 0 6px rgba(16, 185, 129, 0);
+      }
+      100% {
+        transform: scale(0.95);
+        box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+      }
+    }
+  </style>
+</head>
+<body class="min-h-screen pb-16">
+
+  <!-- TOP HEADER -->
+  <header class="border-b border-[#3d2b2e]/60 bg-[#1f1517]/80 sticky top-0 z-30 backdrop-blur-md">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <div>
+        <div class="flex items-center gap-2">
+          <span class="text-2xl">✂️</span>
+          <h1 class="font-playfair text-2xl sm:text-3xl font-bold tracking-tight">
+            Salón <span class="text-[var(--rose)]">Belleza & Cabello</span>
+          </h1>
+          <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-950/60 text-emerald-400 border border-emerald-800/50">
+            <span class="live-dot"></span> Vivo
+          </span>
+        </div>
+        <p class="text-xs sm:text-sm text-[var(--mut)] mt-1">
+          Análisis interactivo de tratamientos por tipo de cabello y registro de ventas en tiempo real.
+        </p>
+      </div>
+
+      <!-- Action Buttons Header -->
+      <div class="flex items-center gap-3">
+        <button onclick="openModal()" class="flex items-center gap-2 bg-gradient-to-r from-[var(--rose-dark)] to-[var(--rose)] hover:opacity-95 text-white font-semibold text-sm px-4 py-2.5 rounded-xl shadow-lg shadow-[var(--rose-dark)]/30 transition transform active:scale-95">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
+          Nuevo Registro
+        </button>
+        <button onclick="exportData()" title="Exportar datos a JSON" class="p-2.5 salon-card hover:text-[var(--gold)] text-[var(--ink)] text-sm rounded-xl transition">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+        </button>
+        <button onclick="confirmResetData()" title="Restablecer datos originales" class="p-2.5 salon-card hover:text-red-400 text-[var(--mut)] text-sm rounded-xl transition">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN CONTAINER -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
+
+    <!-- HERO HIGHLIGHT BANNER: SERVICIO ESTRELLA & TIPO DE CABELLO LÍDER -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6" id="topHighlights">
+      <!-- Rendered dynamically by JS -->
+    </div>
+
+    <!-- FILTERS AND SEARCH BAR -->
+    <div class="salon-card p-4 mb-6">
+      <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+        <!-- Tabs by Hair Type -->
+        <div class="flex items-center gap-2 overflow-x-auto pb-2 lg:pb-0 scrollbar-none" id="tabs">
+          <!-- Populated by JS -->
+        </div>
+
+        <!-- Search & Secondary Filters -->
+        <div class="flex flex-wrap items-center gap-3">
+          <!-- Search box -->
+          <div class="relative flex-1 sm:w-64">
+            <input type="text" id="searchInput" oninput="handleSearch()" placeholder="Buscar cliente..." 
+              class="w-full bg-[var(--chip)] border border-[var(--line)] rounded-full text-xs sm:text-sm px-4 py-2 pl-9 focus:outline-none focus:border-[var(--rose)] text-[var(--ink)] placeholder-[var(--mut)] transition">
+            <svg class="w-4 h-4 absolute left-3 top-2.5 text-[var(--mut)]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+          </div>
+
+          <!-- Category filter -->
+          <select id="catFilter" onchange="handleFilterChange()" class="bg-[var(--chip)] border border-[var(--line)] rounded-full text-xs sm:text-sm px-3 py-2 text-[var(--ink)] focus:outline-none focus:border-[var(--rose)] transition">
+            <option value="Todas">Todas las categorías</option>
+            <option value="Tratamiento">Tratamiento / Servicio</option>
+            <option value="Venta de producto">Venta de producto</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- DATE FILTER ROW -->
+      <div class="mt-4 pt-4 border-t border-[var(--line)] flex flex-col xl:flex-row xl:items-center justify-between gap-3">
+        <div class="flex items-center gap-2 flex-wrap">
+          <span class="text-xs font-semibold uppercase tracking-wider text-[var(--gold)] mr-1">📅 Período</span>
+          <div class="flex items-center gap-1.5 flex-wrap" id="datePresets"></div>
+        </div>
+        <div class="flex items-center gap-2 flex-wrap text-xs">
+          <label class="text-[var(--mut)]">Desde</label>
+          <input type="date" id="dateFrom" onchange="handleDateInputs()"
+            class="bg-[var(--chip)] border border-[var(--line)] rounded-full px-3 py-1.5 text-[var(--ink)] focus:outline-none focus:border-[var(--rose)]">
+          <label class="text-[var(--mut)]">Hasta</label>
+          <input type="date" id="dateTo" onchange="handleDateInputs()"
+            class="bg-[var(--chip)] border border-[var(--line)] rounded-full px-3 py-1.5 text-[var(--ink)] focus:outline-none focus:border-[var(--rose)]">
+          <select id="granularity" onchange="handleGranularity()" class="bg-[var(--chip)] border border-[var(--line)] rounded-full px-3 py-1.5 text-[var(--ink)] focus:outline-none focus:border-[var(--rose)]">
+            <option value="month">Agrupar por mes</option>
+            <option value="quarter" selected>Agrupar por trimestre</option>
+            <option value="year">Agrupar por año</option>
+          </select>
+        </div>
+      </div>
+      <p class="text-[11px] text-[var(--mut)] mt-2" id="dateSummary"></p>
+    </div>
+
+    <!-- CARDS BY HAIR TYPE (REALISTIC PHOTOS) -->
+    <section class="mb-8">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="font-playfair text-xl sm:text-2xl font-semibold text-[var(--ink)]">
+          Tipos de Cabello en el Salón
+        </h2>
+        <span class="text-xs text-[var(--mut)]">Selecciona una tarjeta para filtrar</span>
+      </div>
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4" id="hairCards">
+        <!-- Rendered by JS -->
+      </div>
+    </section>
+
+    <!-- KPIS SECTION -->
+    <section class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8" id="kpis">
+      <!-- Rendered by JS -->
+    </section>
+
+    <!-- CHARTS GRID -->
+    <section class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+      <!-- Services Bar Chart (2 Cols) -->
+      <div class="salon-card p-5 lg:col-span-2 flex flex-col justify-between">
+        <div>
+          <div class="flex items-center justify-between mb-3">
+            <h3 class="font-semibold text-base sm:text-lg text-[var(--ink)]" id="barTitle">
+              Servicios más tomados
+            </h3>
+            <span class="text-xs text-[var(--gold)] font-medium bg-[var(--chip)] px-2.5 py-1 rounded-full border border-[var(--line)]">
+              Ranking de demanda
+            </span>
+          </div>
+          <div class="space-y-3 my-4" id="bars">
+            <!-- Rendered by JS -->
+          </div>
+        </div>
+
+        <p class="text-xs text-[var(--mut)] mt-2">💡 Haz clic en cualquier barra de servicio para ver el listado de clientes detallado.</p>
+        
+        <!-- Drill-down list of clients for selected service -->
+        <div id="whoContainer" class="mt-4 pt-4 border-t border-[var(--line)] hidden">
+          <!-- Rendered by JS -->
+        </div>
+      </div>
+
+      <!-- Categories Donut Chart (1 Col) -->
+      <div class="salon-card p-5 flex flex-col justify-between">
+        <div>
+          <div class="flex items-center justify-between mb-3">
+            <h3 class="font-semibold text-base sm:text-lg text-[var(--ink)]">
+              Distribución por Categoría
+            </h3>
+          </div>
+          <div class="flex flex-col items-center justify-center py-4">
+            <div class="relative w-44 h-44 flex items-center justify-center">
+              <svg id="donutSvg" class="w-full h-full transform -rotate-90" viewBox="0 0 42 42"></svg>
+              <div class="absolute text-center">
+                <span class="block text-2xl font-bold font-playfair text-[var(--ink)]" id="donutTotal">0</span>
+                <span class="text-[10px] uppercase tracking-wider text-[var(--mut)]">Registros</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="space-y-2 text-xs border-t border-[var(--line)] pt-3" id="donutLegend">
+          <!-- Rendered by JS -->
+        </div>
+      </div>
+    </section>
+
+    <!-- TIME EVOLUTION -->
+    <section class="salon-card p-5 mb-8">
+      <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-2 mb-3">
+        <div>
+          <h3 class="font-semibold text-base sm:text-lg text-[var(--ink)]" id="trendTitle">
+            Evolución de servicios en el tiempo
+          </h3>
+          <p class="text-xs text-[var(--mut)]">Barras de fondo: total de atenciones del período · Líneas: cantidad de cada servicio seleccionado (eje izquierdo). Pasa el cursor sobre los puntos para ver el dato.</p>
+        </div>
+        <div class="flex gap-2 shrink-0">
+          <button onclick="selectTopServices(3)" class="preset-btn">Top 3</button>
+          <button onclick="selectAllServices()" class="preset-btn">Todos</button>
+          <button onclick="clearServices()" class="preset-btn">Ninguno</button>
+        </div>
+      </div>
+
+      <div class="flex flex-wrap gap-1.5 mb-4" id="trendChips"></div>
+
+      <div class="w-full overflow-x-auto">
+        <div id="trendChart" class="min-w-[560px]"></div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mt-4" id="trendInsights"></div>
+
+      <div class="mt-5">
+        <h4 class="text-xs font-bold uppercase tracking-wider text-[var(--mut)] mb-2">Detalle por período (cantidad de atenciones)</h4>
+        <div class="overflow-x-auto rounded-xl border border-[var(--line)]">
+          <table class="w-full text-xs text-center border-collapse">
+            <thead><tr class="bg-[var(--chip)] text-[var(--mut)] border-b border-[var(--line)]" id="periodHead"></tr></thead>
+            <tbody id="periodBody" class="divide-y divide-[var(--line)]"></tbody>
+          </table>
+        </div>
+        <p class="text-[11px] text-[var(--mut)] mt-2">"Cambio" compara el último período del rango con el período anterior.</p>
+      </div>
+    </section>
+
+    <!-- HEATMAP MATRIX -->
+    <section class="salon-card p-5 mb-8">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
+        <div>
+          <h3 class="font-semibold text-base sm:text-lg text-[var(--ink)]">
+            Mapa de calor: Tipo de Cabello vs Servicio
+          </h3>
+          <p class="text-xs text-[var(--mut)]">Porcentaje de preferencia dentro de cada grupo de tipo de cabello</p>
+        </div>
+        <div class="flex items-center gap-2 text-xs text-[var(--mut)]">
+          <span>Menos frecuente</span>
+          <div class="h-3 w-16 rounded bg-gradient-to-r from-[rgba(201,87,122,0.1)] to-[rgba(201,87,122,1)] border border-[var(--line)]"></div>
+          <span>Más frecuente</span>
+        </div>
+      </div>
+
+      <div class="overflow-x-auto rounded-xl border border-[var(--line)]">
+        <table class="w-full text-xs text-center border-collapse">
+          <thead>
+            <tr class="bg-[var(--chip)] text-[var(--mut)] border-b border-[var(--line)]" id="matrixHead">
+              <!-- Rendered by JS -->
+            </tr>
+          </thead>
+          <tbody id="matrixBody" class="divide-y divide-[var(--line)]">
+            <!-- Rendered by JS -->
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- RECENT TRANSACTIONS TABLE -->
+    <section class="salon-card p-5">
+      <div class="flex items-center justify-between mb-4">
+        <div>
+          <h3 class="font-semibold text-base sm:text-lg text-[var(--ink)]">
+            Registro General de Atención
+          </h3>
+          <p class="text-xs text-[var(--mut)]">Historial completo de clientes y tratamientos aplicados</p>
+        </div>
+        <button onclick="openModal()" class="text-xs text-[var(--rose)] hover:underline font-semibold flex items-center gap-1">
+          + Agregar Nuevo
+        </button>
+      </div>
+
+      <div class="overflow-x-auto rounded-xl border border-[var(--line)]">
+        <table class="w-full text-xs text-left">
+          <thead class="bg-[var(--chip)] text-[var(--mut)] uppercase tracking-wider font-semibold border-b border-[var(--line)]">
+            <tr>
+              <th class="px-4 py-3">ID / Cliente</th>
+              <th class="px-4 py-3">Edad</th>
+              <th class="px-4 py-3">Tipo Cabello</th>
+              <th class="px-4 py-3">Servicio</th>
+              <th class="px-4 py-3">Categoría</th>
+              <th class="px-4 py-3">Fecha</th>
+              <th class="px-4 py-3 text-right">Acción</th>
+            </tr>
+          </thead>
+          <tbody id="transactionsTable" class="divide-y divide-[var(--line)]">
+            <!-- Rendered by JS -->
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- MODAL FOR ADDING NEW SERVICE / SALE -->
+  <div id="serviceModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 modal-backdrop hidden">
+    <div class="salon-card w-full max-w-lg p-6 bg-[#25191c] border border-[var(--line)] shadow-2xl relative transform transition-all">
+      <button onclick="closeModal()" class="absolute top-4 right-4 text-[var(--mut)] hover:text-white transition">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
+
+      <div class="flex items-center gap-3 mb-5">
+        <div class="w-10 h-10 rounded-full bg-[var(--rose)]/20 border border-[var(--rose)]/40 flex items-center justify-center text-[var(--rose)]">
+          ✂️
+        </div>
+        <div>
+          <h3 class="font-playfair text-xl font-bold text-[var(--ink)]">Registrar Atención o Venta</h3>
+          <p class="text-xs text-[var(--mut)]">Ingresa los detalles para actualizar los reportes al instante</p>
+        </div>
+      </div>
+
+      <form id="recordForm" onsubmit="handleFormSubmit(event)" class="space-y-4">
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div class="sm:col-span-2">
+            <label class="block text-xs font-semibold text-[var(--mut)] uppercase mb-1">Nombre del Cliente *</label>
+            <input type="text" id="formName" required placeholder="Ej. Camila Morales" 
+              class="w-full bg-[var(--chip)] border border-[var(--line)] rounded-xl px-3.5 py-2.5 text-sm text-[var(--ink)] focus:outline-none focus:border-[var(--rose)] transition">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-[var(--mut)] uppercase mb-1">Edad *</label>
+            <input type="number" id="formAge" required min="10" max="99" placeholder="28" 
+              class="w-full bg-[var(--chip)] border border-[var(--line)] rounded-xl px-3.5 py-2.5 text-sm text-[var(--ink)] focus:outline-none focus:border-[var(--rose)] transition">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-semibold text-[var(--mut)] uppercase mb-1">Tipo de Cabello *</label>
+            <select id="formHair" required class="w-full bg-[var(--chip)] border border-[var(--line)] rounded-xl px-3.5 py-2.5 text-sm text-[var(--ink)] focus:outline-none focus:border-[var(--rose)] transition">
+              <option value="Liso">Liso</option>
+              <option value="Ondulado">Ondulado</option>
+              <option value="Rizado">Rizado</option>
+              <option value="Muy rizado">Muy rizado</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-[var(--mut)] uppercase mb-1">Tipo de Operación *</label>
+            <select id="formCategory" required onchange="updateServiceOptions()" class="w-full bg-[var(--chip)] border border-[var(--line)] rounded-xl px-3.5 py-2.5 text-sm text-[var(--ink)] focus:outline-none focus:border-[var(--rose)] transition">
+              <option value="Tratamiento">Servicio de Salón</option>
+              <option value="Venta de producto">Venta de Producto</option>
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-[var(--mut)] uppercase mb-1">Servicio / Producto Realizado *</label>
+          <input type="text" id="formService" required list="serviceSuggestions" placeholder="Ej. Keratina, Hidratación, Corte..." 
+            class="w-full bg-[var(--chip)] border border-[var(--line)] rounded-xl px-3.5 py-2.5 text-sm text-[var(--ink)] focus:outline-none focus:border-[var(--rose)] transition">
+          <datalist id="serviceSuggestions">
+            <option value="Keratina"></option>
+            <option value="Hidratación"></option>
+            <option value="Coloración"></option>
+            <option value="Corte"></option>
+            <option value="Tratamiento"></option>
+            <option value="Ampolla de Keratina"></option>
+            <option value="Mascarilla Reparadora"></option>
+            <option value="Acondicionador Profundo"></option>
+            <option value="Tónico Capilar"></option>
+            <option value="Shampoo Nutritivo"></option>
+            <option value="Cepillo Térmico"></option>
+          </datalist>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-[var(--mut)] uppercase mb-1">Fecha de Atención *</label>
+          <input type="date" id="formDate" required 
+            class="w-full bg-[var(--chip)] border border-[var(--line)] rounded-xl px-3.5 py-2.5 text-sm text-[var(--ink)] focus:outline-none focus:border-[var(--rose)] transition">
+        </div>
+
+        <div class="pt-3 flex items-center justify-end gap-3 border-t border-[var(--line)]">
+          <button type="button" onclick="closeModal()" class="px-4 py-2.5 rounded-xl border border-[var(--line)] text-xs font-semibold text-[var(--mut)] hover:text-white transition">
+            Cancelar
+          </button>
+          <button type="submit" class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-[var(--rose-dark)] to-[var(--rose)] text-white text-xs font-semibold shadow-md hover:opacity-95 transition">
+            Guardar y Actualizar
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- TOAST NOTIFICATION -->
+  <div id="toast" class="fixed bottom-5 right-5 z-50 bg-[var(--card)] border border-[var(--rose)] text-[var(--ink)] px-4 py-3 rounded-xl shadow-2xl flex items-center gap-3 transform translate-y-20 opacity-0 transition-all duration-300">
+    <span class="text-xl" id="toastIcon">✨</span>
+    <div>
+      <h4 class="text-xs font-bold" id="toastTitle">Éxito</h4>
+      <p class="text-xs text-[var(--mut)]" id="toastMsg">Operación realizada.</p>
+    </div>
+  </div>
+
+  <!-- JAVASCRIPT LOGIC -->
+  <script>
+    // -------------------------------------------------------------
+    // INITIAL SEED DATA
+    // -------------------------------------------------------------
+    const INITIAL_DATA = [
+      ["C-1","Valentina González",65,"Rizado","Mascarilla Reparadora","Venta de producto","13/01/2024"],
+      ["C-1","Valentina González",65,"Rizado","Hidratación","Hidratación","16/03/2024"],
+      ["C-1","Valentina González",65,"Rizado","Keratina","Keratina","14/05/2024"],
+      ["C-1","Valentina González",65,"Rizado","Coloración","Coloración","09/07/2024"],
+      ["C-2","Sofía Martínez",19,"Liso","Keratina","Keratina","18/09/2024"],
+      ["C-2","Sofía Martínez",19,"Liso","Tratamiento","Tratamiento","12/12/2024"],
+      ["C-2","Sofía Martínez",19,"Liso","Acondicionador Profundo","Venta de producto","25/03/2025"],
+      ["C-2","Sofía Martínez",19,"Liso","Hidratación","Hidratación","27/05/2025"],
+      ["C-3","Camila Ríos",59,"Liso","Tratamiento","Tratamiento","21/04/2024"],
+      ["C-3","Camila Ríos",59,"Liso","Shampoo Nutritivo","Venta de producto","06/07/2024"],
+      ["C-3","Camila Ríos",59,"Liso","Corte","Corte","13/08/2024"],
+      ["C-3","Camila Ríos",59,"Liso","Keratina","Keratina","19/11/2024"],
+      ["C-4","Isabella Vega",28,"Rizado","Hidratación","Hidratación","07/02/2024"],
+      ["C-4","Isabella Vega",28,"Rizado","Ampolla de Keratina","Venta de producto","22/04/2024"],
+      ["C-4","Isabella Vega",28,"Rizado","Tratamiento","Tratamiento","04/07/2024"],
+      ["C-4","Isabella Vega",28,"Rizado","Keratina","Keratina","27/08/2024"],
+      ["C-4","Isabella Vega",28,"Rizado","Coloración","Coloración","28/10/2024"],
+      ["C-5","Mariana Rodríguez",23,"Ondulado","Corte","Corte","15/03/2024"],
+      ["C-5","Mariana Rodríguez",23,"Ondulado","Ampolla de Keratina","Venta de producto","23/06/2024"],
+      ["C-5","Mariana Rodríguez",23,"Ondulado","Tratamiento","Tratamiento","30/08/2024"],
+      ["C-5","Mariana Rodríguez",23,"Ondulado","Keratina","Keratina","24/10/2024"],
+      ["C-6","Daniela Sánchez",20,"Rizado","Ampolla de Keratina","Venta de producto","03/11/2023"],
+      ["C-6","Daniela Sánchez",20,"Rizado","Keratina","Keratina","19/02/2024"],
+      ["C-6","Daniela Sánchez",20,"Rizado","Hidratación","Hidratación","07/04/2024"],
+      ["C-6","Daniela Sánchez",20,"Rizado","Tratamiento","Tratamiento","28/06/2024"],
+      ["C-6","Daniela Sánchez",20,"Rizado","Coloración","Coloración","10/10/2024"],
+      ["C-7","Gabriela Muñoz",58,"Muy rizado","Hidratación","Hidratación","15/12/2023"],
+      ["C-7","Gabriela Muñoz",58,"Muy rizado","Corte","Corte","01/04/2024"],
+      ["C-7","Gabriela Muñoz",58,"Muy rizado","Coloración","Coloración","12/05/2024"],
+      ["C-7","Gabriela Muñoz",58,"Muy rizado","Tratamiento","Tratamiento","12/08/2024"],
+      ["C-7","Gabriela Muñoz",58,"Muy rizado","Cepillo Térmico","Venta de producto","01/10/2024"],
+      ["C-8","Natalia Martínez",60,"Ondulado","Coloración","Coloración","24/08/2024"],
+      ["C-8","Natalia Martínez",60,"Ondulado","Ampolla de Keratina","Venta de producto","16/10/2024"],
+      ["C-8","Natalia Martínez",60,"Ondulado","Corte","Corte","21/01/2025"],
+      ["C-8","Natalia Martínez",60,"Ondulado","Hidratación","Hidratación","17/03/2025"],
+      ["C-9","Alejandra Romero",24,"Liso","Tratamiento","Tratamiento","25/12/2024"],
+      ["C-9","Alejandra Romero",24,"Liso","Coloración","Coloración","30/01/2025"],
+      ["C-9","Alejandra Romero",24,"Liso","Hidratación","Hidratación","03/03/2025"],
+      ["C-9","Alejandra Romero",24,"Liso","Acondicionador Profundo","Venta de producto","12/05/2025"],
+      ["C-10","Juliana Castro",31,"Rizado","Hidratación","Hidratación","03/11/2023"],
+      ["C-10","Juliana Castro",31,"Rizado","Ampolla de Keratina","Venta de producto","07/12/2023"],
+      ["C-10","Juliana Castro",31,"Rizado","Coloración","Coloración","03/03/2024"],
+      ["C-10","Juliana Castro",31,"Rizado","Keratina","Keratina","22/05/2024"],
+      ["C-10","Juliana Castro",31,"Rizado","Tratamiento","Tratamiento","09/09/2024"],
+      ["C-11","Paola Cruz",64,"Liso","Coloración","Coloración","16/05/2024"],
+      ["C-11","Paola Cruz",64,"Liso","Corte","Corte","03/08/2024"],
+      ["C-11","Paola Cruz",64,"Liso","Keratina","Keratina","27/09/2024"],
+      ["C-11","Paola Cruz",64,"Liso","Tónico Capilar","Venta de producto","25/12/2024"],
+      ["C-11","Paola Cruz",64,"Liso","Hidratación","Hidratación","29/01/2025"],
+      ["C-12","Andrea Guerrero",38,"Muy rizado","Keratina","Keratina","18/02/2024"],
+      ["C-12","Andrea Guerrero",38,"Muy rizado","Coloración","Coloración","24/03/2024"],
+      ["C-12","Andrea Guerrero",38,"Muy rizado","Hidratación","Hidratación","25/06/2024"],
+      ["C-12","Andrea Guerrero",38,"Muy rizado","Acondicionador Profundo","Venta de producto","02/08/2024"],
+      ["C-13","Carolina Ramos",35,"Liso","Coloración","Coloración","19/02/2024"],
+      ["C-13","Carolina Ramos",35,"Liso","Tratamiento","Tratamiento","27/04/2024"],
+      ["C-13","Carolina Ramos",35,"Liso","Hidratación","Hidratación","24/06/2024"],
+      ["C-13","Carolina Ramos",35,"Liso","Acondicionador Profundo","Venta de producto","24/08/2024"],
+      ["C-13","Carolina Ramos",35,"Liso","Corte","Corte","10/11/2024"],
+      ["C-14","Verónica Ramos",59,"Rizado","Tratamiento","Tratamiento","18/04/2024"],
+      ["C-14","Verónica Ramos",59,"Rizado","Keratina","Keratina","25/07/2024"],
+      ["C-14","Verónica Ramos",59,"Rizado","Mascarilla Reparadora","Venta de producto","29/09/2024"],
+      ["C-14","Verónica Ramos",59,"Rizado","Corte","Corte","09/11/2024"],
+      ["C-14","Verónica Ramos",59,"Rizado","Coloración","Coloración","24/12/2024"],
+      ["C-15","Lucía Aguilar",55,"Ondulado","Keratina","Keratina","14/03/2024"],
+      ["C-15","Lucía Aguilar",55,"Ondulado","Ampolla de Keratina","Venta de producto","11/04/2024"],
+      ["C-15","Lucía Aguilar",55,"Ondulado","Coloración","Coloración","20/06/2024"],
+      ["C-15","Lucía Aguilar",55,"Ondulado","Corte","Corte","03/08/2024"],
+      ["C-15","Lucía Aguilar",55,"Ondulado","Tratamiento","Tratamiento","20/11/2024"],
+      ["C-16","María José Díaz",49,"Rizado","Tónico Capilar","Venta de producto","04/07/2024"],
+      ["C-16","María José Díaz",49,"Rizado","Corte","Corte","01/09/2024"],
+      ["C-16","María José Díaz",49,"Rizado","Keratina","Keratina","25/10/2024"],
+      ["C-16","María José Díaz",49,"Rizado","Tratamiento","Tratamiento","05/12/2024"],
+      ["C-17","Sara Sánchez",61,"Liso","Hidratación","Hidratación","24/10/2024"],
+      ["C-17","Sara Sánchez",61,"Liso","Ampolla de Keratina","Venta de producto","04/12/2024"],
+      ["C-17","Sara Sánchez",61,"Liso","Tratamiento","Tratamiento","21/01/2025"],
+      ["C-17","Sara Sánchez",61,"Liso","Corte","Corte","07/04/2025"],
+      ["C-17","Sara Sánchez",61,"Liso","Keratina","Keratina","09/05/2025"],
+      ["C-18","Ángela Díaz",34,"Muy rizado","Coloración","Coloración","20/08/2024"],
+      ["C-18","Ángela Díaz",34,"Muy rizado","Tratamiento","Tratamiento","01/10/2024"],
+      ["C-18","Ángela Díaz",34,"Muy rizado","Keratina","Keratina","01/11/2024"],
+      ["C-18","Ángela Díaz",34,"Muy rizado","Corte","Corte","01/01/2025"],
+      ["C-18","Ángela Díaz",34,"Muy rizado","Mascarilla Reparadora","Venta de producto","20/02/2025"],
+      ["C-19","Fernanda Vega",59,"Liso","Corte","Corte","20/06/2024"],
+      ["C-19","Fernanda Vega",59,"Liso","Coloración","Coloración","20/09/2024"],
+      ["C-19","Fernanda Vega",59,"Liso","Ampolla de Keratina","Venta de producto","25/11/2024"],
+      ["C-19","Fernanda Vega",59,"Liso","Tratamiento","Tratamiento","07/01/2025"],
+      ["C-19","Fernanda Vega",59,"Liso","Hidratación","Hidratación","16/03/2025"],
+      ["C-20","Diana García",64,"Muy rizado","Coloración","Coloración","01/11/2023"],
+      ["C-20","Diana García",64,"Muy rizado","Tratamiento","Tratamiento","25/12/2023"],
+      ["C-20","Diana García",64,"Muy rizado","Corte","Corte","27/02/2024"],
+      ["C-20","Diana García",64,"Muy rizado","Acondicionador Profundo","Venta de producto","20/05/2024"],
+      ["C-21","Laura Romero",58,"Ondulado","Tónico Capilar","Venta de producto","13/09/2024"],
+      ["C-21","Laura Romero",58,"Ondulado","Hidratación","Hidratación","16/10/2024"],
+      ["C-21","Laura Romero",58,"Ondulado","Keratina","Keratina","14/12/2024"],
+      ["C-21","Laura Romero",58,"Ondulado","Tratamiento","Tratamiento","12/03/2025"],
+      ["C-21","Laura Romero",58,"Ondulado","Coloración","Coloración","26/06/2025"],
+      ["C-22","Adriana Vega",28,"Ondulado","Tratamiento","Tratamiento","12/05/2024"],
+      ["C-22","Adriana Vega",28,"Ondulado","Mascarilla Reparadora","Venta de producto","24/08/2024"],
+      ["C-22","Adriana Vega",28,"Ondulado","Coloración","Coloración","01/12/2024"],
+      ["C-22","Adriana Vega",28,"Ondulado","Corte","Corte","06/03/2025"],
+      ["C-23","Mónica Reyes",19,"Liso","Tratamiento","Tratamiento","27/08/2024"],
+      ["C-23","Mónica Reyes",19,"Liso","Cepillo Térmico","Venta de producto","24/10/2024"],
+      ["C-23","Mónica Reyes",19,"Liso","Coloración","Coloración","27/12/2024"],
+      ["C-23","Mónica Reyes",19,"Liso","Hidratación","Hidratación","02/02/2025"],
+      ["C-23","Mónica Reyes",19,"Liso","Corte","Corte","05/04/2025"],
+      ["C-24","Patricia Torres",54,"Rizado","Tratamiento","Tratamiento","04/07/2024"],
+      ["C-24","Patricia Torres",54,"Rizado","Corte","Corte","13/10/2024"],
+      ["C-24","Patricia Torres",54,"Rizado","Cepillo Térmico","Venta de producto","28/12/2024"],
+      ["C-24","Patricia Torres",54,"Rizado","Coloración","Coloración","27/03/2025"],
+      ["C-24","Patricia Torres",54,"Rizado","Keratina","Keratina","24/04/2025"],
+      ["C-25","Claudia Vega",52,"Muy rizado","Keratina","Keratina","18/11/2023"],
+      ["C-25","Claudia Vega",52,"Muy rizado","Tratamiento","Tratamiento","13/02/2024"],
+      ["C-25","Claudia Vega",52,"Muy rizado","Hidratación","Hidratación","04/04/2024"],
+      ["C-25","Claudia Vega",52,"Muy rizado","Corte","Corte","08/05/2024"],
+      ["C-25","Claudia Vega",52,"Muy rizado","Mascarilla Reparadora","Venta de producto","08/07/2024"],
+      ["C-26","Jimena Vargas",51,"Muy rizado","Coloración","Coloración","06/03/2024"],
+      ["C-26","Jimena Vargas",51,"Muy rizado","Acondicionador Profundo","Venta de producto","04/05/2024"],
+      ["C-26","Jimena Vargas",51,"Muy rizado","Hidratación","Hidratación","26/06/2024"],
+      ["C-26","Jimena Vargas",51,"Muy rizado","Keratina","Keratina","26/07/2024"],
+      ["C-27","Vanessa Ramos",60,"Ondulado","Corte","Corte","14/03/2024"],
+      ["C-27","Vanessa Ramos",60,"Ondulado","Cepillo Térmico","Venta de producto","24/06/2024"],
+      ["C-27","Vanessa Ramos",60,"Ondulado","Hidratación","Hidratación","04/08/2024"],
+      ["C-27","Vanessa Ramos",60,"Ondulado","Tratamiento","Tratamiento","04/09/2024"],
+      ["C-27","Vanessa Ramos",60,"Ondulado","Keratina","Keratina","10/11/2024"],
+      ["C-28","Lorena Torres",22,"Muy rizado","Keratina","Keratina","27/01/2024"],
+      ["C-28","Lorena Torres",22,"Muy rizado","Coloración","Coloración","10/04/2024"],
+      ["C-28","Lorena Torres",22,"Muy rizado","Corte","Corte","02/07/2024"],
+      ["C-28","Lorena Torres",22,"Muy rizado","Acondicionador Profundo","Venta de producto","12/08/2024"],
+      ["C-29","Beatriz García",22,"Ondulado","Keratina","Keratina","13/10/2023"],
+      ["C-29","Beatriz García",22,"Ondulado","Corte","Corte","11/01/2024"],
+      ["C-29","Beatriz García",22,"Ondulado","Tratamiento","Tratamiento","06/03/2024"],
+      ["C-29","Beatriz García",22,"Ondulado","Coloración","Coloración","18/05/2024"],
+      ["C-29","Beatriz García",22,"Ondulado","Tónico Capilar","Venta de producto","18/07/2024"],
+      ["C-30","Rosa López",50,"Liso","Tratamiento","Tratamiento","20/02/2024"],
+      ["C-30","Rosa López",50,"Liso","Shampoo Nutritivo","Venta de producto","27/04/2024"],
+      ["C-30","Rosa López",50,"Liso","Corte","Corte","07/08/2024"],
+      ["C-30","Rosa López",50,"Liso","Coloración","Coloración","21/10/2024"],
+      ["C-31","Yessenia Aguilar",54,"Muy rizado","Hidratación","Hidratación","28/03/2024"],
+      ["C-31","Yessenia Aguilar",54,"Muy rizado","Coloración","Coloración","22/05/2024"],
+      ["C-31","Yessenia Aguilar",54,"Muy rizado","Tónico Capilar","Venta de producto","19/08/2024"],
+      ["C-31","Yessenia Aguilar",54,"Muy rizado","Corte","Corte","21/10/2024"],
+      ["C-31","Yessenia Aguilar",54,"Muy rizado","Tratamiento","Tratamiento","01/02/2025"],
+      ["C-32","Angie Pérez",24,"Muy rizado","Coloración","Coloración","06/03/2024"],
+      ["C-32","Angie Pérez",24,"Muy rizado","Shampoo Nutritivo","Venta de producto","03/06/2024"],
+      ["C-32","Angie Pérez",24,"Muy rizado","Hidratación","Hidratación","30/08/2024"],
+      ["C-32","Angie Pérez",24,"Muy rizado","Corte","Corte","22/11/2024"],
+      ["C-32","Angie Pérez",24,"Muy rizado","Keratina","Keratina","01/02/2025"],
+      ["C-33","Katherine Gómez",64,"Rizado","Corte","Corte","27/01/2024"],
+      ["C-33","Katherine Gómez",64,"Rizado","Hidratación","Hidratación","02/04/2024"],
+      ["C-33","Katherine Gómez",64,"Rizado","Tónico Capilar","Venta de producto","25/06/2024"],
+      ["C-33","Katherine Gómez",64,"Rizado","Keratina","Keratina","18/09/2024"],
+      ["C-33","Katherine Gómez",64,"Rizado","Tratamiento","Tratamiento","03/12/2024"],
+      ["C-34","Melissa Aguilar",39,"Liso","Coloración","Coloración","19/09/2024"],
+      ["C-34","Melissa Aguilar",39,"Liso","Tratamiento","Tratamiento","10/12/2024"],
+      ["C-34","Melissa Aguilar",39,"Liso","Corte","Corte","21/01/2025"],
+      ["C-34","Melissa Aguilar",39,"Liso","Hidratación","Hidratación","28/04/2025"],
+      ["C-34","Melissa Aguilar",39,"Liso","Acondicionador Profundo","Venta de producto","23/06/2025"],
+      ["C-35","Tatiana González",45,"Ondulado","Tratamiento","Tratamiento","07/05/2024"],
+      ["C-35","Tatiana González",45,"Ondulado","Coloración","Coloración","29/07/2024"],
+      ["C-35","Tatiana González",45,"Ondulado","Keratina","Keratina","06/10/2024"],
+      ["C-35","Tatiana González",45,"Ondulado","Tónico Capilar","Venta de producto","19/01/2025"],
+      ["C-36","Lina Gómez",53,"Ondulado","Corte","Corte","05/11/2023"],
+      ["C-36","Lina Gómez",53,"Ondulado","Keratina","Keratina","16/01/2024"],
+      ["C-36","Lina Gómez",53,"Ondulado","Acondicionador Profundo","Venta de producto","13/04/2024"],
+      ["C-36","Lina Gómez",53,"Ondulado","Coloración","Coloración","22/05/2024"],
+      ["C-37","Marcela Hernández",44,"Liso","Coloración","Coloración","07/10/2023"],
+      ["C-37","Marcela Hernández",44,"Liso","Keratina","Keratina","18/11/2023"],
+      ["C-37","Marcela Hernández",44,"Liso","Tratamiento","Tratamiento","26/01/2024"],
+      ["C-37","Marcela Hernández",44,"Liso","Hidratación","Hidratación","14/04/2024"],
+      ["C-37","Marcela Hernández",44,"Liso","Acondicionador Profundo","Venta de producto","16/07/2024"],
+      ["C-38","Nathalia Ramos",18,"Muy rizado","Keratina","Keratina","03/09/2024"],
+      ["C-38","Nathalia Ramos",18,"Muy rizado","Ampolla de Keratina","Venta de producto","20/12/2024"],
+      ["C-38","Nathalia Ramos",18,"Muy rizado","Hidratación","Hidratación","04/04/2025"],
+      ["C-38","Nathalia Ramos",18,"Muy rizado","Corte","Corte","01/06/2025"],
+      ["C-39","Viviana Ríos",64,"Muy rizado","Shampoo Nutritivo","Venta de producto","19/02/2024"],
+      ["C-39","Viviana Ríos",64,"Muy rizado","Keratina","Keratina","15/05/2024"],
+      ["C-39","Viviana Ríos",64,"Muy rizado","Hidratación","Hidratación","21/08/2024"],
+      ["C-39","Viviana Ríos",64,"Muy rizado","Tratamiento","Tratamiento","06/10/2024"],
+      ["C-40","Sandra Morales",31,"Muy rizado","Cepillo Térmico","Venta de producto","22/03/2024"],
+      ["C-40","Sandra Morales",31,"Muy rizado","Tratamiento","Tratamiento","02/06/2024"],
+      ["C-40","Sandra Morales",31,"Muy rizado","Keratina","Keratina","30/08/2024"],
+      ["C-40","Sandra Morales",31,"Muy rizado","Hidratación","Hidratación","04/12/2024"],
+      ["C-40","Sandra Morales",31,"Muy rizado","Corte","Corte","12/02/2025"],
+      ["C-41","Gloria Martínez",21,"Liso","Keratina","Keratina","08/05/2024"],
+      ["C-41","Gloria Martínez",21,"Liso","Coloración","Coloración","08/08/2024"],
+      ["C-41","Gloria Martínez",21,"Liso","Corte","Corte","21/09/2024"],
+      ["C-41","Gloria Martínez",21,"Liso","Tratamiento","Tratamiento","23/10/2024"],
+      ["C-41","Gloria Martínez",21,"Liso","Ampolla de Keratina","Venta de producto","03/02/2025"],
+      ["C-42","Esperanza López",29,"Ondulado","Coloración","Coloración","10/12/2023"],
+      ["C-42","Esperanza López",29,"Ondulado","Keratina","Keratina","09/03/2024"],
+      ["C-42","Esperanza López",29,"Ondulado","Tratamiento","Tratamiento","25/06/2024"],
+      ["C-42","Esperanza López",29,"Ondulado","Hidratación","Hidratación","01/09/2024"],
+      ["C-42","Esperanza López",29,"Ondulado","Tónico Capilar","Venta de producto","07/12/2024"],
+      ["C-43","Pilar Pardo",54,"Ondulado","Ampolla de Keratina","Venta de producto","02/09/2024"],
+      ["C-43","Pilar Pardo",54,"Ondulado","Tratamiento","Tratamiento","31/10/2024"],
+      ["C-43","Pilar Pardo",54,"Ondulado","Coloración","Coloración","03/02/2025"],
+      ["C-43","Pilar Pardo",54,"Ondulado","Hidratación","Hidratación","24/04/2025"],
+      ["C-44","Olga Ortiz",60,"Liso","Mascarilla Reparadora","Venta de producto","31/05/2024"],
+      ["C-44","Olga Ortiz",60,"Liso","Keratina","Keratina","18/07/2024"],
+      ["C-44","Olga Ortiz",60,"Liso","Coloración","Coloración","23/10/2024"],
+      ["C-44","Olga Ortiz",60,"Liso","Corte","Corte","29/11/2024"],
+      ["C-45","Fabiola Guerrero",63,"Rizado","Tónico Capilar","Venta de producto","31/12/2023"],
+      ["C-45","Fabiola Guerrero",63,"Rizado","Corte","Corte","21/02/2024"],
+      ["C-45","Fabiola Guerrero",63,"Rizado","Coloración","Coloración","09/06/2024"],
+      ["C-45","Fabiola Guerrero",63,"Rizado","Tratamiento","Tratamiento","04/08/2024"],
+      ["C-45","Fabiola Guerrero",63,"Rizado","Hidratación","Hidratación","16/10/2024"],
+      ["C-46","Marta Gómez",38,"Muy rizado","Coloración","Coloración","06/11/2023"],
+      ["C-46","Marta Gómez",38,"Muy rizado","Acondicionador Profundo","Venta de producto","18/12/2023"],
+      ["C-46","Marta Gómez",38,"Muy rizado","Hidratación","Hidratación","27/02/2024"],
+      ["C-46","Marta Gómez",38,"Muy rizado","Corte","Corte","02/05/2024"],
+      ["C-46","Marta Gómez",38,"Muy rizado","Keratina","Keratina","28/07/2024"],
+      ["C-47","Amparo Díaz",34,"Liso","Tratamiento","Tratamiento","05/01/2024"],
+      ["C-47","Amparo Díaz",34,"Liso","Corte","Corte","02/03/2024"],
+      ["C-47","Amparo Díaz",34,"Liso","Coloración","Coloración","29/05/2024"],
+      ["C-47","Amparo Díaz",34,"Liso","Keratina","Keratina","29/06/2024"],
+      ["C-47","Amparo Díaz",34,"Liso","Acondicionador Profundo","Venta de producto","14/10/2024"],
+      ["C-48","Yolanda Morales",28,"Liso","Coloración","Coloración","27/06/2024"],
+      ["C-48","Yolanda Morales",28,"Liso","Cepillo Térmico","Venta de producto","25/09/2024"],
+      ["C-48","Yolanda Morales",28,"Liso","Tratamiento","Tratamiento","09/01/2025"],
+      ["C-48","Yolanda Morales",28,"Liso","Keratina","Keratina","30/03/2025"],
+      ["C-48","Yolanda Morales",28,"Liso","Hidratación","Hidratación","01/06/2025"],
+      ["C-49","Cristina García",60,"Rizado","Tónico Capilar","Venta de producto","22/11/2024"],
+      ["C-49","Cristina García",60,"Rizado","Keratina","Keratina","02/03/2025"],
+      ["C-49","Cristina García",60,"Rizado","Coloración","Coloración","25/04/2025"],
+      ["C-49","Cristina García",60,"Rizado","Corte","Corte","31/05/2025"],
+      ["C-50","Helena Rodríguez",24,"Liso","Hidratación","Hidratación","02/06/2024"],
+      ["C-50","Helena Rodríguez",24,"Liso","Acondicionador Profundo","Venta de producto","14/08/2024"],
+      ["C-50","Helena Rodríguez",24,"Liso","Coloración","Coloración","11/10/2024"],
+      ["C-50","Helena Rodríguez",24,"Liso","Tratamiento","Tratamiento","22/01/2025"],
+      ["C-50","Helena Rodríguez",24,"Liso","Keratina","Keratina","01/04/2025"]
+    ];
+
+    // High quality Unsplash photography for real hair salon textures
+    const REAL_PHOTOS = {
+      "Liso": "https://images.unsplash.com/photo-1560869713-7d0a29430803?auto=format&fit=crop&w=600&q=80",
+      "Ondulado": "https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&w=600&q=80",
+      "Rizado": "https://images.unsplash.com/photo-1580618672591-eb180b1a973f?auto=format&fit=crop&w=600&q=80",
+      "Muy rizado": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=600&q=80"
+    };
+
+    const HAIR_TYPES = ["Todos", "Liso", "Ondulado", "Rizado", "Muy rizado"];
+    const COLOR_PALETTE = ["#e0789a", "#d8a964", "#7f6bb0", "#4f9d8f", "#e08a5b", "#6b8fc9"];
+
+    // App State
+    let salonData = [];
+    let currentTypeFilter = "Todos";
+    let selectedService = null;
+    let searchQuery = "";
+    let categoryFilter = "Todas";
+    let dateFrom = null;      // Date | null
+    let dateTo = null;        // Date | null
+    let activePreset = "Todo";
+    let granularity = "quarter";
+    let trendSelected = new Set();
+    let trendInitialized = false;
+
+    const MESES = ["ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic"];
+    const TREND_COLORS = ["#e0789a","#d8a964","#7f6bb0","#4f9d8f","#e08a5b","#6b8fc9","#c9a0dc","#9fc96b","#e05b5b","#5bc0e0","#f0d06b","#b0857f"];
+
+    // Element Helper
+    const $ = id => document.getElementById(id);
+
+    // -------------------------------------------------------------
+    // DATE HELPERS
+    // -------------------------------------------------------------
+    function parseDate(s) {
+      const [d, m, y] = String(s).split('/').map(Number);
+      return new Date(y, (m || 1) - 1, d || 1);
+    }
+    function parseInputDate(v) {
+      if (!v) return null;
+      const [y, m, d] = v.split('-').map(Number);
+      return new Date(y, m - 1, d);
+    }
+    function toInputDate(dt) {
+      if (!dt) return '';
+      return `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`;
+    }
+    function fmtDate(dt) {
+      return `${dt.getDate()} ${MESES[dt.getMonth()]} ${dt.getFullYear()}`;
+    }
+    function inDateRange(row) {
+      const d = parseDate(row[6]);
+      if (dateFrom && d < dateFrom) return false;
+      if (dateTo && d > dateTo) return false;
+      return true;
+    }
+    function dataBounds(rows) {
+      const ts = rows.map(r => parseDate(r[6]).getTime());
+      if (!ts.length) return null;
+      return { min: new Date(Math.min(...ts)), max: new Date(Math.max(...ts)) };
+    }
+    function periodStart(dt, g) {
+      const y = dt.getFullYear(), m = dt.getMonth();
+      if (g === 'month') return new Date(y, m, 1);
+      if (g === 'quarter') return new Date(y, Math.floor(m / 3) * 3, 1);
+      return new Date(y, 0, 1);
+    }
+    function nextPeriod(dt, g) {
+      const y = dt.getFullYear(), m = dt.getMonth();
+      if (g === 'month') return new Date(y, m + 1, 1);
+      if (g === 'quarter') return new Date(y, m + 3, 1);
+      return new Date(y + 1, 0, 1);
+    }
+    function periodKey(dt, g) {
+      const s = periodStart(dt, g);
+      return s.getTime();
+    }
+    function periodLabel(dt, g) {
+      const y = dt.getFullYear(), m = dt.getMonth();
+      if (g === 'month') return `${MESES[m]} ${String(y).slice(2)}`;
+      if (g === 'quarter') return `T${Math.floor(m / 3) + 1} ${y}`;
+      return `${y}`;
+    }
+    function periodSequence(minD, maxD, g) {
+      const seq = [];
+      let cur = periodStart(minD, g);
+      const end = periodStart(maxD, g).getTime();
+      let guard = 0;
+      while (cur.getTime() <= end && guard < 400) {
+        seq.push(cur);
+        cur = nextPeriod(cur, g);
+        guard++;
+      }
+      return seq;
+    }
+
+    // Rows filtered by date only (used for cards & heatmap)
+    function dateRows() {
+      return salonData.filter(inDateRange);
+    }
+
+    // -------------------------------------------------------------
+    // DATE FILTER UI
+    // -------------------------------------------------------------
+    function getPresets() {
+      const b = dataBounds(salonData);
+      const presets = [{ id: "Todo", label: "Todo el historial", from: null, to: null }];
+      if (!b) return presets;
+      for (let y = b.min.getFullYear(); y <= b.max.getFullYear(); y++) {
+        presets.push({ id: String(y), label: String(y), from: new Date(y, 0, 1), to: new Date(y, 11, 31) });
+      }
+      const last6From = new Date(b.max.getFullYear(), b.max.getMonth() - 5, 1);
+      presets.push({ id: "U6", label: "Últimos 6 meses", from: last6From, to: b.max });
+      const last12From = new Date(b.max.getFullYear(), b.max.getMonth() - 11, 1);
+      presets.push({ id: "U12", label: "Últimos 12 meses", from: last12From, to: b.max });
+      return presets;
+    }
+
+    function renderDatePresets() {
+      $('datePresets').innerHTML = getPresets().map(p => `
+        <button class="preset-btn ${p.id === activePreset ? 'active' : ''}" onclick="applyPreset('${p.id}')">${p.label}</button>
+      `).join('') + (activePreset === 'Custom' ? `<span class="preset-btn active">Personalizado</span>` : '');
+      $('dateFrom').value = toInputDate(dateFrom);
+      $('dateTo').value = toInputDate(dateTo);
+
+      const b = dataBounds(salonData);
+      const n = dateRows().length;
+      const fromTxt = dateFrom ? fmtDate(dateFrom) : (b ? fmtDate(b.min) : '—');
+      const toTxt = dateTo ? fmtDate(dateTo) : (b ? fmtDate(b.max) : '—');
+      $('dateSummary').innerHTML = `Mostrando <b class="text-[var(--ink)]">${fromTxt}</b> → <b class="text-[var(--ink)]">${toTxt}</b> · ${n} atenciones en el período (antes de otros filtros)`;
+    }
+
+    function applyPreset(id) {
+      const p = getPresets().find(x => x.id === id);
+      if (!p) return;
+      activePreset = id;
+      dateFrom = p.from;
+      dateTo = p.to;
+      if (id === "Todo" || /^\d{4}$/.test(id)) {
+        // Year view reads better by month; full history by quarter
+        granularity = /^\d{4}$/.test(id) ? 'month' : 'quarter';
+      } else {
+        granularity = 'month';
+      }
+      $('granularity').value = granularity;
+      selectedService = null;
+      renderApp();
+    }
+
+    function handleDateInputs() {
+      dateFrom = parseInputDate($('dateFrom').value);
+      dateTo = parseInputDate($('dateTo').value);
+      if (dateFrom && dateTo && dateFrom > dateTo) {
+        [dateFrom, dateTo] = [dateTo, dateFrom];
+      }
+      activePreset = (!dateFrom && !dateTo) ? "Todo" : "Custom";
+      selectedService = null;
+      renderApp();
+    }
+
+    function handleGranularity() {
+      granularity = $('granularity').value;
+      renderTrend(getFilteredRows());
+    }
+
+    // -------------------------------------------------------------
+    // INITIALIZATION & LOCALSTORAGE
+    // -------------------------------------------------------------
+    function init() {
+      const stored = localStorage.getItem("salon_data_v2");
+      if (stored) {
+        try {
+          salonData = JSON.parse(stored);
+        } catch(e) {
+          salonData = [...INITIAL_DATA];
+        }
+      } else {
+        salonData = [...INITIAL_DATA];
+      }
+
+      // Set default date in form to today
+      const today = new Date().toISOString().split('T')[0];
+      $('formDate').value = today;
+
+      renderTabs();
+      renderApp();
+    }
+
+    function saveData() {
+      localStorage.setItem("salon_data_v2", JSON.stringify(salonData));
+    }
+
+    // -------------------------------------------------------------
+    // DATA COMPUTATIONS & FILTERS
+    // -------------------------------------------------------------
+    function getFilteredRows() {
+      return salonData.filter(row => {
+        // row: [ID, Name, Age, HairType, Service, Category, Date]
+        const matchesType = currentTypeFilter === "Todos" || row[3] === currentTypeFilter;
+        const matchesSearch = !searchQuery || row[1].toLowerCase().includes(searchQuery.toLowerCase()) || row[4].toLowerCase().includes(searchQuery.toLowerCase());
+        const matchesCat = categoryFilter === "Todas" || 
+          (categoryFilter === "Venta de producto" ? row[5] === "Venta de producto" : row[5] !== "Venta de producto");
+        return matchesType && matchesSearch && matchesCat && inDateRange(row);
+      });
+    }
+
+    function countBy(rows, index) {
+      const map = {};
+      rows.forEach(r => {
+        const val = r[index];
+        map[val] = (map[val] || 0) + 1;
+      });
+      return Object.entries(map).sort((a, b) => b[1] - a[1]);
+    }
+
+    // -------------------------------------------------------------
+    // RENDERING LOGIC
+    // -------------------------------------------------------------
+    function renderApp() {
+      const rows = getFilteredRows();
+      
+      renderDatePresets();
+      renderTopHighlights(rows);
+      renderHairCards();
+      renderKPIs(rows);
+      renderBarChart(rows);
+      renderDonutChart(rows);
+      renderTrend(rows);
+      renderMatrix();
+      renderTransactionsTable(rows);
+    }
+
+    // Render Top Banner Highlights (Servicio Estrella & Tipo de Cabello Líder)
+    function renderTopHighlights(rows) {
+      const topContainer = $('topHighlights');
+      const serviceCounts = countBy(rows, 4);
+      const hairCounts = countBy(rows, 3);
+
+      const topService = serviceCounts[0] ? serviceCounts[0][0] : 'N/A';
+      const topServiceQty = serviceCounts[0] ? serviceCounts[0][1] : 0;
+
+      const topHair = hairCounts[0] ? hairCounts[0][0] : 'N/A';
+      const topHairQty = hairCounts[0] ? hairCounts[0][1] : 0;
+
+      topContainer.innerHTML = `
+        <!-- Top Service Card -->
+        <div class="salon-card p-5 relative overflow-hidden bg-gradient-to-r from-[#2e1d23] to-[var(--card)] border border-[var(--rose)]/40 shadow-xl">
+          <div class="absolute -right-4 -bottom-4 text-7xl opacity-10 select-none">⭐</div>
+          <div class="flex items-center gap-4">
+            <div class="w-14 h-14 rounded-2xl bg-gradient-to-tr from-[var(--rose-dark)] to-[var(--rose)] flex items-center justify-center text-2xl text-white shadow-lg shadow-[var(--rose-dark)]/40 shrink-0">
+              ⭐
+            </div>
+            <div class="overflow-hidden">
+              <span class="text-xs uppercase font-bold tracking-wider text-[var(--gold)] flex items-center gap-1.5">
+                Servicio Estrella
+              </span>
+              <h2 class="font-playfair text-2xl sm:text-3xl font-bold text-white truncate mt-0.5">${topService}</h2>
+              <p class="text-xs text-[var(--mut)] mt-1">
+                Total de atenciones realizadas: <b class="text-[var(--rose)] font-bold text-sm">${topServiceQty} servicios</b>
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Top Hair Type Card -->
+        <div class="salon-card p-5 relative overflow-hidden bg-gradient-to-r from-[#2c221a] to-[var(--card)] border border-[var(--gold)]/40 shadow-xl">
+          <div class="absolute -right-4 -bottom-4 text-7xl opacity-10 select-none">👑</div>
+          <div class="flex items-center gap-4">
+            <div class="w-14 h-14 rounded-2xl bg-gradient-to-tr from-[var(--gold)] to-amber-300 flex items-center justify-center text-2xl text-[#1a1214] shadow-lg shadow-[var(--gold)]/30 shrink-0">
+              👑
+            </div>
+            <div class="overflow-hidden">
+              <span class="text-xs uppercase font-bold tracking-wider text-[var(--rose)] flex items-center gap-1.5">
+                Tipo de Cabello con Más Servicios
+              </span>
+              <h2 class="font-playfair text-2xl sm:text-3xl font-bold text-white truncate mt-0.5">${topHair}</h2>
+              <p class="text-xs text-[var(--mut)] mt-1">
+                Total de atenciones recibidas: <b class="text-[var(--gold)] font-bold text-sm">${topHairQty} servicios</b>
+              </p>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    // Render Filter Buttons (Tabs)
+    function renderTabs() {
+      $('tabs').innerHTML = HAIR_TYPES.map(type => `
+        <button class="tab-btn ${type === currentTypeFilter ? 'active' : ''}" onclick="setHairFilter('${type}')">
+          ${type === "Todos" ? '✨ Ver Todos los Tipos' : type}
+        </button>
+      `).join('');
+    }
+
+    // Render Hair Type Cards with Real Images
+    function renderHairCards() {
+      const container = $('hairCards');
+      const types = HAIR_TYPES.slice(1);
+
+      container.innerHTML = types.map(type => {
+        const typeRows = dateRows().filter(r => r[3] === type);
+        const uniqueClients = new Set(typeRows.map(r => r[0])).size;
+        const topServices = countBy(typeRows, 4).slice(0, 3);
+        const maxCount = topServices[0] ? topServices[0][1] : 1;
+        const isActive = currentTypeFilter === type;
+
+        return `
+          <div class="type-card ${isActive ? 'active' : ''}" onclick="setHairFilter('${type}')">
+            <div class="h-44 w-full relative overflow-hidden bg-[var(--chip)]">
+              <img src="${REAL_PHOTOS[type]}" alt="${type}" class="w-full h-full object-cover transition duration-500 hover:scale-105">
+              <div class="absolute inset-0 bg-gradient-to-t from-[#25191c] via-transparent to-transparent opacity-90"></div>
+              <div class="absolute bottom-3 left-3 right-3 flex justify-between items-end">
+                <div>
+                  <h3 class="font-playfair text-xl font-bold text-white drop-shadow">${type}</h3>
+                  <span class="text-xs text-[var(--gold)] font-medium">${uniqueClients} Clientes registrados</span>
+                </div>
+                <span class="text-xs bg-[var(--rose-dark)] text-white px-2 py-0.5 rounded-full font-semibold">
+                  ${typeRows.length} Serv.
+                </span>
+              </div>
+            </div>
+            
+            <div class="p-3 text-xs space-y-2">
+              <div class="text-[var(--mut)] font-semibold uppercase text-[10px] tracking-wider">Tratamientos preferidos:</div>
+              <ul class="space-y-1.5">
+                ${topServices.map(([srv, count]) => `
+                  <li class="flex items-center justify-between p-1.5 rounded-lg bg-[var(--chip)]">
+                    <span class="truncate text-[var(--ink)]">${srv}</span>
+                    <span class="font-bold text-[var(--rose)]">${count}</span>
+                  </li>
+                `).join('')}
+              </ul>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // Render KPIs
+    function renderKPIs(rows) {
+      const container = $('kpis');
+      const totalClients = new Set(rows.map(r => r[0])).size;
+      const totalServices = rows.length;
+      const avgAge = rows.length ? Math.round(rows.reduce((acc, r) => acc + r[2], 0) / rows.length) : 0;
+      const serviceCounts = countBy(rows, 4);
+      const topService = serviceCounts[0] ? serviceCounts[0][0] : 'N/A';
+
+      const items = [
+        { label: 'Clientes Únicos', val: totalClients, sub: 'en vista actual', icon: '👤' },
+        { label: 'Servicios Realizados', val: totalServices, sub: 'atenciones totales', icon: '✂️' },
+        { label: 'Edad Promedio', val: avgAge ? avgAge + ' años' : 'N/A', sub: 'perfil de cliente', icon: '🎂' },
+        { label: 'Servicio Estrella', val: topService, sub: 'más solicitado', icon: '⭐', isSmall: true }
+      ];
+
+      container.innerHTML = items.map(k => `
+        <div class="salon-card p-4 flex items-center gap-3">
+          <div class="w-12 h-12 rounded-2xl bg-[var(--chip)] border border-[var(--line)] flex items-center justify-center text-xl shrink-0">
+            ${k.icon}
+          </div>
+          <div class="overflow-hidden">
+            <span class="text-[10px] uppercase tracking-wider text-[var(--mut)] block">${k.label}</span>
+            <b class="font-playfair text-xl sm:text-2xl text-[var(--ink)] block truncate ${k.isSmall ? 'text-base sm:text-lg' : ''}">${k.val}</b>
+            <span class="text-[10px] text-[var(--mut)] opacity-80 block truncate">${k.sub}</span>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // Render Bar Chart & Selected Service Drilldown
+    function renderBarChart(rows) {
+      const services = countBy(rows, 4);
+      const max = services[0] ? services[0][1] : 1;
+      const title = currentTypeFilter === "Todos" 
+        ? "Servicios más tomados · Todos los clientes" 
+        : `Servicios más tomados · Cabello ${currentTypeFilter.toLowerCase()}`;
+
+      $('barTitle').textContent = title;
+
+      $('bars').innerHTML = services.map(([name, count]) => {
+        const pct = Math.round((count / (rows.length || 1)) * 100);
+        const widthPct = (count / max) * 100;
+        const isSelected = name === selectedService;
+
+        return `
+          <div class="bar-row ${isSelected ? 'selected' : ''}" onclick="toggleSelectService('${name}')">
+            <div class="flex justify-between text-xs mb-1">
+              <span class="bar-title text-[var(--ink)] font-medium truncate">${name}</span>
+              <span class="text-[var(--mut)] font-semibold">${count} <span class="opacity-60">(${pct}%)</span></span>
+            </div>
+            <div class="track-bg">
+              <div class="fill-bar" style="width: ${widthPct}%"></div>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      // Render Drill-down list if selected
+      const whoContainer = $('whoContainer');
+      if (selectedService) {
+        const matchingRows = rows.filter(r => r[4] === selectedService);
+        const uniqueNames = [...new Map(matchingRows.map(r => [r[0], r[1]])).values()];
+        
+        whoContainer.classList.remove('hidden');
+        whoContainer.innerHTML = `
+          <div class="flex items-center justify-between mb-2">
+            <h4 class="text-xs font-bold text-[var(--rose)] uppercase">
+              Clientes que tomaron "${selectedService}" (${uniqueNames.length})
+            </h4>
+            <button onclick="toggleSelectService('${selectedService}')" class="text-[10px] text-[var(--mut)] hover:underline">Cerrar detalle</button>
+          </div>
+          <div class="flex flex-wrap gap-1.5">
+            ${uniqueNames.map(name => `<span class="bg-[var(--chip)] border border-[var(--line)] text-xs text-[var(--ink)] px-2.5 py-1 rounded-full">${name}</span>`).join('')}
+          </div>
+        `;
+      } else {
+        whoContainer.classList.add('hidden');
+      }
+    }
+
+    // Render Donut Chart (Categories)
+    function renderDonutChart(rows) {
+      const categories = countBy(rows, 5);
+      const total = rows.length;
+      $('donutTotal').textContent = total;
+
+      const R = 15.9155;
+      const C = 2 * Math.PI * R;
+      let accumOffset = 0;
+
+      const svgCircles = categories.map(([catName, count], idx) => {
+        const strokeColor = COLOR_PALETTE[idx % COLOR_PALETTE.length];
+        const dashLen = (count / (total || 1)) * C;
+        const gapLen = C - dashLen;
+        const offset = -accumOffset;
+        accumOffset += dashLen;
+
+        return `
+          <circle cx="21" cy="21" r="${R}" 
+            fill="none" 
+            stroke="${strokeColor}" 
+            stroke-width="5" 
+            stroke-dasharray="${dashLen} ${gapLen}" 
+            stroke-dashoffset="${offset}"
+            class="transition-all duration-700 ease-out"
+          />
+        `;
+      }).join('');
+
+      // Add background track
+      $('donutSvg').innerHTML = `
+        <circle cx="21" cy="21" r="${R}" fill="none" stroke="var(--chip)" stroke-width="5"/>
+        ${svgCircles}
+      `;
+
+      // Legend
+      $('donutLegend').innerHTML = categories.map(([catName, count], idx) => {
+        const pct = Math.round((count / (total || 1)) * 100);
+        const color = COLOR_PALETTE[idx % COLOR_PALETTE.length];
+        return `
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <span class="w-2.5 h-2.5 rounded-full" style="background:${color}"></span>
+              <span class="text-[var(--ink)]">${catName}</span>
+            </div>
+            <b class="text-[var(--gold)]">${count} (${pct}%)</b>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // -------------------------------------------------------------
+    // TIME EVOLUTION (trend chart + insights + period table)
+    // -------------------------------------------------------------
+    function serviceColor(name) {
+      const all = [...new Set(salonData.map(r => r[4]))].sort();
+      const i = all.indexOf(name);
+      return TREND_COLORS[(i < 0 ? 0 : i) % TREND_COLORS.length];
+    }
+
+    function toggleTrendService(name) {
+      if (trendSelected.has(name)) trendSelected.delete(name);
+      else trendSelected.add(name);
+      renderTrend(getFilteredRows());
+    }
+    function selectTopServices(n) {
+      trendSelected = new Set(countBy(getFilteredRows(), 4).slice(0, n).map(x => x[0]));
+      renderTrend(getFilteredRows());
+    }
+    function selectAllServices() {
+      trendSelected = new Set(countBy(getFilteredRows(), 4).map(x => x[0]));
+      renderTrend(getFilteredRows());
+    }
+    function clearServices() {
+      trendSelected = new Set();
+      trendInitialized = true;
+      renderTrend(getFilteredRows());
+    }
+
+    function renderTrend(rows) {
+      const g = granularity;
+      const gName = { month: 'mes', quarter: 'trimestre', year: 'año' }[g];
+      const scope = currentTypeFilter === "Todos" ? "todos los clientes" : `cabello ${currentTypeFilter.toLowerCase()}`;
+      $('trendTitle').textContent = `Evolución de servicios por ${gName} · ${scope}`;
+
+      if (!rows.length) {
+        $('trendChips').innerHTML = '';
+        $('trendChart').innerHTML = `<div class="text-center text-[var(--mut)] text-sm py-12">No hay atenciones en este período con los filtros actuales.</div>`;
+        $('trendInsights').innerHTML = '';
+        $('periodHead').innerHTML = '';
+        $('periodBody').innerHTML = '';
+        return;
+      }
+
+      const services = countBy(rows, 4).map(x => x[0]);
+      if (!trendInitialized) {
+        trendSelected = new Set(services.slice(0, 3));
+        trendInitialized = true;
+      }
+
+      // Period axis: the selected range, or the data's own range
+      const b = dataBounds(rows);
+      const minD = dateFrom || b.min;
+      const maxD = dateTo || b.max;
+      const periods = periodSequence(minD, maxD, g);
+      const keyIdx = new Map(periods.map((p, i) => [p.getTime(), i]));
+
+      const totals = new Array(periods.length).fill(0);
+      const bySvc = {};
+      services.forEach(s => bySvc[s] = new Array(periods.length).fill(0));
+      rows.forEach(r => {
+        const i = keyIdx.get(periodKey(parseDate(r[6]), g));
+        if (i === undefined) return;
+        totals[i]++;
+        bySvc[r[4]][i]++;
+      });
+
+      // Chips
+      $('trendChips').innerHTML = services.map(s => {
+        const on = trendSelected.has(s);
+        const total = bySvc[s].reduce((a, c) => a + c, 0);
+        return `<span class="svc-chip ${on ? 'on' : ''}" onclick="toggleTrendService('${s.replace(/'/g, "\\'")}')">
+          <span class="dot" style="background:${serviceColor(s)}"></span>${s} <b class="text-[var(--mut)] font-normal">${total}</b>
+        </span>`;
+      }).join('');
+
+      // Chart geometry
+      const W = 820, H = 300, L = 40, R = 16, T = 18, B = 44;
+      const iw = W - L - R, ih = H - T - B;
+      const n = periods.length;
+      const band = iw / n;
+      // Lines get their own scale (selected services); bars are scaled to the period totals
+      const sel = [...trendSelected].filter(s => bySvc[s]);
+      const lineMax = sel.length ? Math.max(1, ...sel.flatMap(s => bySvc[s])) : Math.max(1, ...totals);
+      const niceMax = lineMax <= 4 ? 4 : Math.ceil(lineMax / 4) * 4;
+      const y = v => T + ih - (v / niceMax) * ih;
+      const totMax = Math.max(1, ...totals);
+      const yBar = v => T + ih - (v / totMax) * ih * 0.92;
+      const x = i => L + band * (i + 0.5);
+
+      const ticks = 4;
+      let grid = '';
+      for (let k = 0; k <= ticks; k++) {
+        const v = Math.round((niceMax / ticks) * k * 10) / 10;
+        const yy = y(v);
+        grid += `<line x1="${L}" x2="${W - R}" y1="${yy}" y2="${yy}" stroke="var(--line)" stroke-width="1" ${k ? 'stroke-dasharray="3 4"' : ''}/>
+                 <text x="${L - 8}" y="${yy + 4}" text-anchor="end" font-size="10" fill="var(--mut)">${Number.isInteger(v) ? v : ''}</text>`;
+      }
+
+      const bw = Math.min(46, band * 0.62);
+      const bars = totals.map((t, i) => `
+        <rect x="${x(i) - bw / 2}" y="${yBar(t)}" width="${bw}" height="${T + ih - yBar(t)}" rx="4"
+          fill="#33232a" stroke="var(--line)">
+          <title>${periodLabel(periods[i], g)}: ${t} atenciones en total</title>
+        </rect>
+        ${t ? `<text x="${x(i)}" y="${yBar(t) - 4}" text-anchor="middle" font-size="9" fill="var(--mut)" opacity="0.8">${t} total</text>` : ''}
+      `).join('');
+
+      const step = Math.ceil(n / 14);
+      const xLabels = periods.map((p, i) => i % step === 0
+        ?`<text x="${x(i)}" y="${H - B + 18}" text-anchor="middle" font-size="10" fill="var(--mut)">${periodLabel(p, g)}</text>` : '').join('');
+
+      const lines = [...trendSelected].filter(s => bySvc[s]).map(s => {
+        const c = serviceColor(s);
+        const pts = bySvc[s].map((v, i) => `${x(i)},${y(v)}`).join(' ');
+        const dots = bySvc[s].map((v, i) => `
+          <circle class="trend-point" cx="${x(i)}" cy="${y(v)}" r="${n > 30 ? 2.5 : 4}" fill="${c}" stroke="var(--card)" stroke-width="1.5">
+            <title>${s} · ${periodLabel(periods[i], g)}: ${v}</title>
+          </circle>`).join('');
+        return `<polyline points="${pts}" fill="none" stroke="${c}" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>${dots}`;
+      }).join('');
+
+      $('trendChart').innerHTML = `
+        <svg viewBox="0 0 ${W} ${H}" class="w-full h-auto" role="img" aria-label="Evolución de servicios en el tiempo">
+          ${grid}${bars}${lines}${xLabels}
+        </svg>`;
+
+      // Insights
+      const peakI = totals.indexOf(Math.max(...totals));
+      const half = Math.floor(n / 2);
+      const sum = arr => arr.reduce((a, c) => a + c, 0);
+      const trendOf = arr => {
+        if (n < 2) return null;
+        const a = sum(arr.slice(0, half)), b2 = sum(arr.slice(n - half));
+        if (a === 0 && b2 === 0) return null;
+        if (a === 0) return { txt: 'Nuevo', cls: 'text-emerald-400', arrow: '▲' };
+        const pct = Math.round(((b2 - a) / a) * 100);
+        return pct > 0 ? { txt: `+${pct}%`, cls: 'text-emerald-400', arrow: '▲' }
+             : pct < 0 ? { txt: `${pct}%`, cls: 'text-red-400', arrow: '▼' }
+             : { txt: '0%', cls: 'text-[var(--mut)]', arrow: '■' };
+      };
+
+      // Fastest growing & falling service (first half vs second half of range)
+      const growth = services.map(s => {
+        const a = sum(bySvc[s].slice(0, half)), b2 = sum(bySvc[s].slice(n - half));
+        return { s, diff: b2 - a, a, b2 };
+      }).sort((p, q) => q.diff - p.diff);
+      const up = growth[0], down = growth[growth.length - 1];
+
+      const card = (icon, label, value, sub) => `
+        <div class="bg-[var(--chip)] border border-[var(--line)] rounded-xl p-3">
+          <div class="text-[10px] uppercase tracking-wider text-[var(--mut)]">${icon} ${label}</div>
+          <div class="font-playfair text-lg text-[var(--ink)] mt-0.5 truncate">${value}</div>
+          <div class="text-[11px] text-[var(--mut)]">${sub}</div>
+        </div>`;
+
+      $('trendInsights').innerHTML =
+        card('📈', 'Período con más atenciones', periodLabel(periods[peakI], g), `${totals[peakI]} atenciones`) +
+        (n >= 2 && up && up.diff > 0
+          ? card('🚀', 'Servicio que más crece', up.s, `${up.a} → ${up.b2} (1ª vs 2ª mitad del rango)`)
+          : card('🚀', 'Servicio que más crece', '—', 'Sin crecimiento en el rango')) +
+        (n >= 2 && down && down.diff < 0
+          ? card('📉', 'Servicio que más cae', down.s, `${down.a} → ${down.b2} (1ª vs 2ª mitad del rango)`)
+          : card('📉', 'Servicio que más cae', '—', 'Ningún servicio bajó'));
+
+      // Period table
+      const maxCell = Math.max(1, ...services.flatMap(s => bySvc[s]));
+      $('periodHead').innerHTML = `
+        <th class="px-3 py-2 text-left font-semibold sticky left-0 bg-[var(--chip)]">Servicio</th>
+        ${periods.map(p => `<th class="px-2 py-2 whitespace-nowrap font-medium">${periodLabel(p, g)}</th>`).join('')}
+        <th class="px-3 py-2 font-semibold">Total</th>
+        <th class="px-3 py-2 font-semibold">Tendencia</th>
+        <th class="px-3 py-2 font-semibold">Cambio</th>`;
+
+      const rowsHtml = services.map(s => {
+        const arr = bySvc[s];
+        const tr = trendOf(arr);
+        const last = arr[n - 1], prev = n > 1 ? arr[n - 2] : null;
+        let chg = '<span class="text-[var(--mut)]">—</span>';
+        if (prev !== null) {
+          const d = last - prev;
+          chg = d > 0 ? `<span class="text-emerald-400">▲ +${d}</span>` : d < 0 ? `<span class="text-red-400">▼ ${d}</span>` : `<span class="text-[var(--mut)]">= 0</span>`;
+        }
+        return `<tr class="hover:bg-[#2e1f23]">
+          <td class="px-3 py-2 text-left font-medium text-[var(--ink)] border-r border-[var(--line)] whitespace-nowrap sticky left-0 bg-[var(--card)]">
+            <span class="inline-block w-2 h-2 rounded-full mr-1.5" style="background:${serviceColor(s)}"></span>${s}
+          </td>
+          ${arr.map(v => `<td class="px-2 py-2" style="background-color: rgba(216,169,100,${(v / maxCell * 0.75).toFixed(2)}); color:${v / maxCell > 0.55 ? '#1a1214' : 'var(--ink)'}">${v || '<span class="opacity-30">·</span>'}</td>`).join('')}
+          <td class="px-3 py-2 font-bold text-[var(--gold)]">${sum(arr)}</td>
+          <td class="px-3 py-2 whitespace-nowrap">${tr ? `<span class="${tr.cls}">${tr.arrow} ${tr.txt}</span>` : '<span class="text-[var(--mut)]">—</span>'}</td>
+          <td class="px-3 py-2 whitespace-nowrap">${chg}</td>
+        </tr>`;
+      }).join('');
+
+      const totalRow = `<tr class="bg-[var(--chip)] font-semibold">
+        <td class="px-3 py-2 text-left text-[var(--ink)] border-r border-[var(--line)] sticky left-0 bg-[var(--chip)]">Total</td>
+        ${totals.map(t => `<td class="px-2 py-2 text-[var(--ink)]">${t}</td>`).join('')}
+        <td class="px-3 py-2 text-[var(--rose)]">${sum(totals)}</td>
+        <td class="px-3 py-2">${(() => { const t = trendOf(totals); return t ? `<span class="${t.cls}">${t.arrow} ${t.txt}</span>` : '—'; })()}</td>
+        <td></td>
+      </tr>`;
+      $('periodBody').innerHTML = rowsHtml + totalRow;
+    }
+
+    // Render Heatmap Matrix (Hair Type x Service)
+    function renderMatrix() {
+      const types = HAIR_TYPES.slice(1);
+      const base = dateRows();
+      const allServices = countBy(base, 4).map(x => x[0]);
+
+      // Header
+      $('matrixHead').innerHTML = `
+        <th class="px-3 py-2 text-left font-semibold">Servicio</th>
+        ${types.map(t => `<th class="px-3 py-2">${t}</th>`).join('')}
+      `;
+
+      // Body
+      $('matrixBody').innerHTML = allServices.map(service => {
+        return `
+          <tr class="hover:bg-[#2e1f23]">
+            <td class="px-3 py-2 font-medium text-left text-[var(--ink)] border-r border-[var(--line)]">${service}</td>
+            ${types.map(t => {
+              const typeGroup = base.filter(r => r[3] === t);
+              const countInType = typeGroup.filter(r => r[4] === service).length;
+              const pct = typeGroup.length ? (countInType / typeGroup.length) * 100 : 0;
+              
+              // Dynamic background opacity based on percentage
+              const alpha = Math.min(1, pct / 25).toFixed(2);
+              const isHigh = pct > 15;
+
+              return `
+                <td class="px-3 py-2 font-semibold transition" 
+                    style="background-color: rgba(201, 87, 122, ${alpha}); color: ${isHigh ? '#ffffff' : 'var(--ink)'}">
+                  ${pct.toFixed(0)}%
+                  <span class="text-[10px] block font-normal opacity-70">${countInType} ops</span>
+                </td>
+              `;
+            }).join('')}
+          </tr>
+        `;
+      }).join('');
+    }
+
+    // Render Transactions Data Table
+    function renderTransactionsTable(rows) {
+      const container = $('transactionsTable');
+      const displayedRows = [...rows]
+        .sort((a, b) => parseDate(b[6]) - parseDate(a[6]))
+        .slice(0, 10); // 10 most recent in the filtered view
+
+      if (!displayedRows.length) {
+        container.innerHTML = `
+          <tr>
+            <td colspan="7" class="text-center py-6 text-[var(--mut)]">
+              No se encontraron registros con los filtros seleccionados.
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      container.innerHTML = displayedRows.map((r, index) => {
+        // row: [ID, Name, Age, HairType, Service, Category, Date]
+        const realIndex = salonData.indexOf(r);
+        return `
+          <tr class="hover:bg-[var(--chip)] transition">
+            <td class="px-4 py-3 font-semibold text-[var(--rose)]">
+              <span class="text-[10px] bg-[var(--chip)] border border-[var(--line)] text-[var(--mut)] px-1.5 py-0.5 rounded mr-1.5">${r[0]}</span>
+              ${r[1]}
+            </td>
+            <td class="px-4 py-3 text-[var(--mut)]">${r[2]} yrs</td>
+            <td class="px-4 py-3">
+              <span class="inline-block px-2 py-0.5 rounded-full text-[11px] bg-[var(--chip)] border border-[var(--line)] text-[var(--ink)]">
+                ${r[3]}
+              </span>
+            </td>
+            <td class="px-4 py-3 font-medium text-[var(--ink)]">${r[4]}</td>
+            <td class="px-4 py-3 text-[var(--mut)]">${r[5]}</td>
+            <td class="px-4 py-3 text-[var(--mut)] text-[11px]">${r[6]}</td>
+            <td class="px-4 py-3 text-right">
+              <button onclick="deleteRecord(${realIndex})" class="text-red-400 hover:text-red-300 transition p-1" title="Eliminar registro">
+                <svg class="w-4 h-4 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+              </button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    // -------------------------------------------------------------
+    // INTERACTION HANDLERS
+    // -------------------------------------------------------------
+    function setHairFilter(type) {
+      currentTypeFilter = type;
+      selectedService = null;
+      renderTabs();
+      renderApp();
+    }
+
+    function toggleSelectService(serviceName) {
+      selectedService = selectedService === serviceName ? null : serviceName;
+      renderBarChart(getFilteredRows());
+    }
+
+    function handleSearch() {
+      searchQuery = $('searchInput').value;
+      renderApp();
+    }
+
+    function handleFilterChange() {
+      categoryFilter = $('catFilter').value;
+      renderApp();
+    }
+
+    // -------------------------------------------------------------
+    // FORM & MODAL MANAGEMENT
+    // -------------------------------------------------------------
+    function openModal() {
+      $('serviceModal').classList.remove('hidden');
+    }
+
+    function closeModal() {
+      $('serviceModal').classList.add('hidden');
+    }
+
+    function handleFormSubmit(e) {
+      e.preventDefault();
+      
+      const name = $('formName').value.trim();
+      const age = parseInt($('formAge').value);
+      const hair = $('formHair').value;
+      const category = $('formCategory').value;
+      const service = $('formService').value.trim();
+      const rawDate = $('formDate').value; // YYYY-MM-DD
+
+      // Format Date to DD/MM/YYYY
+      const parts = rawDate.split('-');
+      const formattedDate = parts.length === 3 ? `${parts[2]}/${parts[1]}/${parts[0]}` : rawDate;
+
+      // Find or generate Client ID
+      const existingClient = salonData.find(r => r[1].toLowerCase() === name.toLowerCase());
+      const clientId = existingClient ? existingClient[0] : `C-${new Set(salonData.map(r=>r[0])).size + 1}`;
+
+      // Insert new record at beginning
+      const newRecord = [clientId, name, age, hair, service, category, formattedDate];
+      salonData.unshift(newRecord);
+      
+      saveData();
+      renderApp();
+      closeModal();
+
+      // Reset form
+      $('formName').value = '';
+      $('formAge').value = '';
+      $('formService').value = '';
+
+      showToast("¡Registro Exitoso!", `Se agregó la atención para ${name}`);
+    }
+
+    function deleteRecord(index) {
+      if (confirm("¿Estás seguro de que deseas eliminar este registro del historial?")) {
+        const deleted = salonData.splice(index, 1);
+        saveData();
+        renderApp();
+        showToast("Registro eliminado", `Atención de ${deleted[0][1]} eliminada.`);
+      }
+    }
+
+    function confirmResetData() {
+      if (confirm("¿Restablecer el dashboard a los 50 datos iniciales? Se borrarán tus nuevos ingresos.")) {
+        salonData = [...INITIAL_DATA];
+        saveData();
+        renderApp();
+        showToast("Datos restablecidos", "Se ha vuelto a la carga inicial del salón.");
+      }
+    }
+
+    function exportData() {
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(salonData, null, 2));
+      const downloadAnchor = document.createElement('a');
+      downloadAnchor.setAttribute("href", dataStr);
+      downloadAnchor.setAttribute("download", `salon_datos_${new Date().toISOString().slice(0,10)}.json`);
+      document.body.appendChild(downloadAnchor);
+      downloadAnchor.click();
+      downloadAnchor.remove();
+      showToast("Exportación completada", "El archivo JSON ha sido descargado.");
+    }
+
+    function showToast(title, msg) {
+      const toast = $('toast');
+      $('toastTitle').textContent = title;
+      $('toastMsg').textContent = msg;
+
+      toast.classList.remove('translate-y-20', 'opacity-0');
+      toast.classList.add('translate-y-0', 'opacity-100');
+
+      setTimeout(() => {
+        toast.classList.remove('translate-y-0', 'opacity-100');
+        toast.classList.add('translate-y-20', 'opacity-0');
+      }, 3500);
+    }
+
+    // -------------------------------------------------------------
+    // RUN APP ON LOAD
+    // -------------------------------------------------------------
+    window.onload = function() {
+      init();
+    };
+  </script>
+</body>
+</html>
